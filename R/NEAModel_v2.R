@@ -34,7 +34,14 @@ scDNS_2_creatNEAModel_v2 <- function (scDNSobject, n.dropGene = NULL, n.randNet 
   #
   uniCase = unique(GroupLabel)
   ExpData <- scDNSobject@data
-  RandGene <- sample(rownames(ExpData), pmin(n.dropGene, nrow(ExpData)))
+  directed_bipartite_mode <- is_directed_bipartite_network(scDNSobject@Network)
+
+  if (directed_bipartite_mode) {
+    RandGene <- unique(unlist(scDNSobject@Network[, 1:2]))
+    RandGene <- RandGene[RandGene %in% rownames(ExpData)]
+  } else {
+    RandGene <- sample(rownames(ExpData), pmin(n.dropGene, nrow(ExpData)))
+  }
   ExpData <- ExpData[RandGene,]
 
   counts = scDNSobject@counts[RandGene,]
@@ -46,19 +53,29 @@ scDNS_2_creatNEAModel_v2 <- function (scDNSobject, n.dropGene = NULL, n.randNet 
   message("creat random net")
   CandidateNet_samll = NULL
 
-  if (length(names(Likelihood[rownames(ExpData)][Likelihood[rownames(ExpData)] >
-                                                 0.95])) >= 100) {
-    sn <- sample(names(Likelihood[rownames(ExpData)][Likelihood[rownames(ExpData)] >
-                                                       0.95]), 100)
-  }  else {
-    sn <- sample(names(Likelihood[rownames(ExpData)]), pmin(100,
-                                                            length(names(Likelihood[rownames(ExpData)]))), prob = Likelihood[rownames(ExpData)])
+  if (directed_bipartite_mode) {
+    obs_net <- unique(scDNSobject@Network[, 1:2, drop = FALSE])
+    colnames(obs_net)[1:2] <- c("source", "target")
+    obs_net <- obs_net[obs_net$source %in% rownames(ExpData) &
+                         obs_net$target %in% rownames(ExpData), , drop = FALSE]
+    CandidateNet_samll <- randomize_directed_bipartite_network(obs_net,
+                                                               n.edge = max(scDNSobject@NEA.Parameters$n.randNet, nrow(obs_net)))
+    CandidateNet_samll <- as.data.frame(CandidateNet_samll)
+  } else {
+    if (length(names(Likelihood[rownames(ExpData)][Likelihood[rownames(ExpData)] >
+                                                   0.95])) >= 100) {
+      sn <- sample(names(Likelihood[rownames(ExpData)][Likelihood[rownames(ExpData)] >
+                                                         0.95]), 100)
+    }  else {
+      sn <- sample(names(Likelihood[rownames(ExpData)]), pmin(100,
+                                                              length(names(Likelihood[rownames(ExpData)]))), prob = Likelihood[rownames(ExpData)])
+    }
+    CandidateNet_samll = lapply(1:length(sn), function(x) sample(rownames(ExpData),
+                                                                 pmin(300, nrow(ExpData))))
+    names(CandidateNet_samll) = sn
+    CandidateNet_samll = List2dataFrame(CandidateNet_samll)
+    colnames(CandidateNet_samll) = c("source", "target")
   }
-  CandidateNet_samll = lapply(1:length(sn), function(x) sample(rownames(ExpData),
-                                                               pmin(300, nrow(ExpData))))
-  names(CandidateNet_samll) = sn
-  CandidateNet_samll = List2dataFrame(CandidateNet_samll)
-  colnames(CandidateNet_samll) = c("source", "target")
   CandidateNet_samll$npoint_log = dropoutMatrix_log[sub2ind(match(CandidateNet_samll[,
                                                                                      1], rownames(dropoutMatrix_log)), match(CandidateNet_samll[,
                                                                                                                                                 2], rownames(dropoutMatrix_log)), nrow = nrow(dropoutMatrix_log),
@@ -66,6 +83,7 @@ scDNS_2_creatNEAModel_v2 <- function (scDNSobject, n.dropGene = NULL, n.randNet 
   CandidateNet_samll$npoint_ds <-  CandidateNet_samll$npoint_log
   CandidateNet_samll$LR = pmin(Likelihood[CandidateNet_samll[,1]],
                                Likelihood[CandidateNet_samll[,2]])
+  CandidateNet_samll$LR[is.na(CandidateNet_samll$LR)] <- 1
   message("rand netowrk")
   # # rand netowrk
   NEAModel_randNet <- creatNEAModel_test(ExpData = ExpData, CandidateNet_samll=CandidateNet_samll,
