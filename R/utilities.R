@@ -241,6 +241,11 @@ preFilterNet <- function(BioNet,CountData,ignore_direction = TRUE){
   BioNet_filterd = BioNet_filterd[reamin_label,]
   message('remain  edges (farction):')
   print(nrow(BioNet_filterd)/nrow(BioNet))
+  if (keep_direction) {
+    attr(BioNet_filterd, "directed_bipartite") <- TRUE
+    attr(BioNet_filterd, "left_nodes") <- attr(BioNet, "left_nodes")
+    attr(BioNet_filterd, "right_nodes") <- attr(BioNet, "right_nodes")
+  }
   BioNet_filterd
 }
 
