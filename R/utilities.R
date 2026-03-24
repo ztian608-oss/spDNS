@@ -231,7 +231,8 @@ preFilterNet <- function(BioNet,CountData,ignore_direction = TRUE){
   print(nrow(BioNet_filterd)/nrow(BioNet))
   #@@@@@@
   message('Step2: remove duplicated edges')
-  BioNet_filterd = detect_Duplicate_edge4net(BioNet_filterd,ingnoreDireaction = ignore_direction,returnLogical = FALSE)
+  keep_direction <- is_directed_bipartite_network(BioNet)
+  BioNet_filterd = detect_Duplicate_edge4net(BioNet_filterd,ingnoreDireaction = !keep_direction,returnLogical = FALSE)
   message('remain non-dupicated edges (farction):')
   print(nrow(BioNet_filterd)/nrow(BioNet))
 

@@ -1,165 +1,129 @@
 # spDNS
 
-`spDNS` 是在 `scDNS` 基础上扩展的单细胞网络评分框架，用于在**单细胞分辨率**下分析**剪接因子（SF）对可变剪接事件的调控**。
+`spDNS` 是在 `scDNS` 基础上做的结构层扩展版本，目标是支持 **有向二部调控网络** 分析（例如：**Splicing Factor, SF → Splicing Event**）。
 
-> 核心升级：从传统基因-基因网络分析，扩展到**有向二部网络**（`SF -> splicing_event`）。
-
----
-
-## 1. 方法概览
-
-### 原始 scDNS 思路
-- 输入：基因表达矩阵 + 基因网络
-- 输出：基因/细胞层面的网络扰动评分
-
-### spDNS 扩展思路
-- 输入：
-  1. 基因表达矩阵（cells × genes）
-  2. PSI 矩阵（cells × splicing events）
-  3. 有向调控网络（`SF -> target_gene`）
-  4. 基因到剪接事件映射（`gene -> splicing_event`）
-- 新增关键步骤：把 `SF -> gene` 扩展成 `SF -> splicing_event`
-- 目标：
-  - 计算每个细胞中每个 SF 的调控活性
-  - 比较不同条件下 SF 活性差异
-  - 识别调控重连（rewiring）
+> 关键原则：
+> - ✅ 保留原有 activity score 与下游统计流程
+> - ✅ 只扩展网络结构处理与随机网络生成
 
 ---
 
-## 2. 安装
+## 1. 安装
+
+仓库地址：`ztian608-oss/spDNS`
 
 ```r
 # install.packages("devtools")
-devtools::install_github("xiaolab-xjtu/scDNS")
+devtools::install_github("ztian608-oss/spDNS")
 ```
-
-> 当前仓库仍保持与 `scDNS` 的函数兼容，新增 `spDNS` 剪接分析函数已加入 `R/splicingDNS.R`。
 
 ---
 
-## 3. 新增函数（spDNS）
+## 2. 适用场景
 
-### 3.1 网络扩展：`SF -> gene` 到 `SF -> event`
+原始网络通常是：
+- `SF -> target_gene`
+
+但剪接分析需要：
+- `SF -> splicing_event`
+
+因此在主流程前，需要先做网络展开（gene 映射到 event）。
+
+---
+
+## 3. 新增函数概览
+
+### 3.1 `expand_network_to_events()`
+将 `SF -> gene` 网络按 `gene -> splicing_event` 映射展开为 `SF -> event`。
 
 ```r
-sf_event_network <- expand_network_to_splicing(
-  sf_gene_network = sf_gene_network,   # data.frame(SF, target_gene)
-  gene_event_map  = gene_event_map     # data.frame(gene, splicing_event)
+sf_event_net <- expand_network_to_events(
+  sf_gene_network = sf_gene_net,   # columns: SF, target_gene
+  gene_event_map  = gene_event_map # columns: gene, splicing_event
 )
 ```
 
-### 3.2 计算单细胞 SF 活性评分
+输出网络列为：
+- `source`（SF）
+- `target`（splicing event）
+
+并自动写入 directed-bipartite 属性，供后续随机网络生成与去重使用。
+
+### 3.2 `randomize_directed_bipartite_network()`
+用于有向二部网络的随机化，满足：
+- 保持 `source` 出度（out-degree）
+- 保持 `target` 入度（in-degree）
+- 保持二部方向（只允许 SF->event）
 
 ```r
-sf_activity <- compute_sf_activity_score(
-  sf_expression    = sf_expr_mat,      # rows: SF, cols: cells
-  psi              = psi_mat,          # rows: events, cols: cells
-  sf_event_network = sf_event_network,
-  center_psi       = TRUE,
-  min_events       = 3,
-  na_to_zero       = TRUE
-)
+rand_net <- randomize_directed_bipartite_network(sf_event_net, n.edge = nrow(sf_event_net))
 ```
-
-默认评分公式：
-
-\[
-A_{s,c}=z(E_{s,c})\times
-\frac{\sum_{e\in T(s)}w_{s,e}\tilde\psi_{e,c}}{\sum_{e\in T(s)}|w_{s,e}|}
-\]
-
-- \(E_{s,c}\)：SF 表达
-- \(\tilde\psi_{e,c}\)：中心化后的 PSI
-- \(w_{s,e}\)：边权重（默认 1）
 
 ### 3.3 条件差异分析（SF 活性）
 
-```r
-diff_sf <- differential_sf_activity(
-  sf_activity = sf_activity,
-  condition   = condition_vector,
-  contrast    = c("Treatment", "Control"),
-  method      = "wilcox"   # or "t.test"
-)
-```
+## 4. 与原 scDNS 主流程的关系
 
-输出包含：`mean_a`, `mean_b`, `delta`, `p_value`, `FDR`。
-
-### 3.4 调控重连（rewiring）分析
+`spDNS` 保持原 scDNS 主流程接口：
 
 ```r
-rewiring_res <- detect_sf_rewiring(
-  sf_expression    = sf_expr_mat,
-  psi              = psi_mat,
-  sf_event_network = sf_event_network,
-  condition        = setNames(condition_vector, colnames(sf_expr_mat)),
-  contrast         = c("Treatment", "Control"),
-  cor_method       = "spearman"
-)
-```
+# 1) 预处理：先扩展网络
+sf_event_net <- expand_network_to_events(sf_gene_net, gene_event_map)
 
-- 对每条 `SF -> event` 边，比较两个条件下 `cor(SF expression, event PSI)` 的差异。
-
----
-
-## 4. 与原 scDNS 的兼容性
-
-已保留原有流程；同时支持有向网络预处理：
-
-- `preFilterNet(..., ignore_direction = TRUE)`
-- `getDoubleDropout(..., ignore_direction = TRUE)`
-
-当你做 `SF -> event` 有向分析时，建议设定：
-
-```r
-ignore_direction = FALSE
-```
-
-以避免把反向边合并。
-
----
-
-## 5. 最小可运行示例
-
-```r
-# 1) 扩展网络
-sf_event_network <- expand_network_to_splicing(sf_gene_network, gene_event_map)
-
-# 2) 计算 SF 活性
-sf_activity <- compute_sf_activity_score(
-  sf_expression = sf_expr_mat,
-  psi = psi_mat,
-  sf_event_network = sf_event_network
+# 2) 构建对象（原函数）
+obj <- CreatScDNSobject(
+  counts = counts_mat,
+  data = expr_mat,
+  Network = sf_event_net,
+  GroupLabel = group_label
 )
 
-# 3) 差异 SF 活性
-diff_sf <- differential_sf_activity(
-  sf_activity = sf_activity,
-  condition = condition_vector,
-  contrast = c("KO", "WT")
-)
+# 3) 计算网络散度（原函数）
+obj <- scDNS_1_CalDivs(obj)
 
-# 4) 网络重连
-rewiring_res <- detect_sf_rewiring(
-  sf_expression = sf_expr_mat,
-  psi = psi_mat,
-  sf_event_network = sf_event_network,
-  condition = setNames(condition_vector, colnames(sf_expr_mat)),
-  contrast = c("KO", "WT")
-)
+# 4) 建模（原函数；内部已支持 directed-bipartite 随机网络）
+obj <- scDNS_2_creatNEAModel_v2(obj)
+
+# 5+) 下游步骤按原流程继续
+# obj <- scDNS_3_GeneZscore_v2(obj)
+# obj <- scDNS_4_scContribution(obj)
 ```
 
 ---
 
-## 6. 注意事项
+## 5. 本次扩展“改了什么 / 没改什么”
 
-- 请确保表达矩阵与 PSI 矩阵的细胞列名可对齐。
-- PSI 稀疏时建议保留 `na_to_zero = TRUE`。
-- 若边数量很大，推荐使用稀疏矩阵输入以提升性能。
+### 改了（仅结构层）
+1. 网络展开（`SF->gene` 到 `SF->event`）
+2. 有向二部图去重（避免把 `A->B` 与 `B->A` 合并）
+3. 有向二部图度保持随机网络生成
+
+### 没改（算法层）
+1. activity score 计算公式
+2. 下游统计与差异分析逻辑
+3. 输出主结构格式
 
 ---
 
-## 7. Citation
+## 6. 输入数据建议
 
-如在研究中使用，请引用 `scDNS/spDNS` 相关方法论文与仓库。
+- `sf_gene_network`：至少包含 `SF`, `target_gene`
+- `gene_event_map`：至少包含 `gene`, `splicing_event`
+- `counts/data`：保持与原 scDNS 使用要求一致
+- `Network` 列名建议使用 `source/target`（主流程内部默认前两列为边）
+
+---
+
+## 7. 常见问题
+
+### Q1: 必须先调用 `expand_network_to_events()` 吗？
+若你分析的是 SF→event 场景，建议必须先调用；否则主流程看到的仍是 gene-level 网络。
+
+### Q2: 会不会影响原 scDNS 结果可比性？
+不会。若仍使用原 gene-gene 网络，流程行为与原版保持一致（结构扩展逻辑仅在 directed-bipartite 场景触发）。
+
+---
+
+## 8. License
+
+沿用项目原有 License 约定。
 
