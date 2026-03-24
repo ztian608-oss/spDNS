@@ -59,7 +59,7 @@ sf_event_net <- expand_network_to_events(
 rand_net <- randomize_directed_bipartite_network(sf_event_net, n.edge = nrow(sf_event_net))
 ```
 
----
+### 3.3 条件差异分析（SF 活性）
 
 ## 4. 与原 scDNS 主流程的关系
 
