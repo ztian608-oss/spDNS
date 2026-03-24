@@ -199,8 +199,8 @@ DetectOutlierBy3kBoxplot_UP <- function(m,zero.rm=TRUE){
 #' @keywords internal
 #'
 #' @examples
-getDoubleDropout <- function(Network,counts){
-  Network = preFilterNet(BioNet = Network,CountData = counts)
+getDoubleDropout <- function(Network,counts,ignore_direction = TRUE){
+  Network = preFilterNet(BioNet = Network,CountData = counts, ignore_direction = ignore_direction)
   counts = counts[rownames(counts)%in%(unlist(Network[,1:2])%>%unique()),]
   # dropoutMatrix = ncol(counts)-Matrix::tcrossprod(counts==0 )
   dropoutMatrix = Matrix::tcrossprod(counts!=0 ) # n
@@ -222,7 +222,7 @@ getDoubleDropout <- function(Network,counts){
 #' @keywords internal
 #'
 #' @examples
-preFilterNet <- function(BioNet,CountData){
+preFilterNet <- function(BioNet,CountData,ignore_direction = TRUE){
   #@@@@@@@@@@@@@
   message('Step1: remove edges that are not in the expression data')
   reamin_label <- BioNet[,1]%in%rownames(CountData)&BioNet[,2]%in%rownames(CountData)
@@ -231,7 +231,7 @@ preFilterNet <- function(BioNet,CountData){
   print(nrow(BioNet_filterd)/nrow(BioNet))
   #@@@@@@
   message('Step2: remove duplicated edges')
-  BioNet_filterd = detect_Duplicate_edge4net(BioNet_filterd,ingnoreDireaction = TRUE,returnLogical = FALSE)
+  BioNet_filterd = detect_Duplicate_edge4net(BioNet_filterd,ingnoreDireaction = ignore_direction,returnLogical = FALSE)
   message('remain non-dupicated edges (farction):')
   print(nrow(BioNet_filterd)/nrow(BioNet))
 
