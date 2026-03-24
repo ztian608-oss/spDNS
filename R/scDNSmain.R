@@ -247,13 +247,21 @@ scDNS_2_creatNEAModel <- function(scDNSobject,
   if(!is.null(n.randNet)){scDNSobject@NEA.Parameters$n.randNet=n.randNet}
   if(!is.null(sdBias)){scDNSobject@NEA.Parameters$sdBias=sdBias}
 
+  Likelihood <- scDNSobject@GeneVariability
+  if (is_directed_bipartite_network(scDNSobject@Network)) {
+    attr(Likelihood, "template_network") <- scDNSobject@Network[, 1:2, drop = FALSE]
+    attr(attr(Likelihood, "template_network"), "directed_bipartite") <- TRUE
+    attr(attr(Likelihood, "template_network"), "left_nodes") <- attr(scDNSobject@Network, "left_nodes")
+    attr(attr(Likelihood, "template_network"), "right_nodes") <- attr(scDNSobject@Network, "right_nodes")
+  }
+
   NEAModel <- creatNEAModel(counts=scDNSobject@counts,
                             ExpData=scDNSobject@data,
                             do.impute = scDNSobject@NEA.Parameters$do.impute,
                             n.dropGene = scDNSobject@NEA.Parameters$n.dropGene,
                             n.randNet = scDNSobject@NEA.Parameters$n.randNet,
                             k = scDNSobject@Div.Parameters$k,
-                            Likelihood=scDNSobject@GeneVariability,
+                            Likelihood=Likelihood,
                             GroupLabel=scDNSobject@GroupLabel,
                             n.grid = scDNSobject@Div.Parameters$n.grid,
                             n.coarse=scDNSobject@Div.Parameters$n.coarse,
@@ -395,7 +403,6 @@ scDNS_5_cluster <- function(scDNSobj,
                         resolution = resolution)
   Sobj
 }
-
 
 
 

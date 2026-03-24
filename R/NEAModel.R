@@ -61,8 +61,15 @@ creatNEAModel<-function(counts,
     ExpData = SOD@assays$MAGIC_RNA@data
   }
   uniCase = unique(GroupLabel)
+  directed_bipartite_mode <- !is.null(attr(Likelihood, "template_network")) &&
+    is_directed_bipartite_network(attr(Likelihood, "template_network"))
   #
-  RandGene = sample(rownames(ExpData),pmin(n.dropGene,nrow(ExpData)))
+  if (directed_bipartite_mode) {
+    RandGene <- unique(unlist(attr(Likelihood, "template_network")[, 1:2]))
+    RandGene <- RandGene[RandGene %in% rownames(ExpData)]
+  } else {
+    RandGene = sample(rownames(ExpData),pmin(n.dropGene,nrow(ExpData)))
+  }
   ExpData = ExpData[RandGene,]
   ExpData[,GroupLabel==uniCase[1]] = apply(ExpData[,GroupLabel==uniCase[1]] , 1, sample)%>%t()
   ExpData[,GroupLabel==uniCase[2]] = apply(ExpData[,GroupLabel==uniCase[2]] , 1, sample)%>%t()
@@ -75,16 +82,22 @@ creatNEAModel<-function(counts,
   #
   message('Rand network')
   CadiateNet = NULL
-  CadidateGene = rownames(dropoutMatrix_log)
-  for(i in 1:length(uniNpoints)){
-    CadiateNet_temp = BiocGenerics::which(dropoutMatrix_log==uniNpoints[i],arr.ind = TRUE,useNames = T)
-    CadiateNet_temp = CadiateNet_temp[sample(nrow(CadiateNet_temp),
-                                             round(n.randNet/length(uniNpoints),0),
-                                             replace = T),] # sampling network for each dropout degree
-    CadiateNet_temp = data.frame(source=CadidateGene[CadiateNet_temp[,1]],
-                                 target=CadidateGene[CadiateNet_temp[,2]])
-    CadiateNet = rbind(CadiateNet,CadiateNet_temp)
-
+  if (directed_bipartite_mode) {
+    CadiateNet <- randomize_directed_bipartite_network(attr(Likelihood, "template_network"),
+                                                       n.edge = n.randNet)
+    CadiateNet <- CadiateNet[CadiateNet$source %in% rownames(dropoutMatrix_log) &
+                               CadiateNet$target %in% rownames(dropoutMatrix_log), , drop = FALSE]
+  } else {
+    CadidateGene = rownames(dropoutMatrix_log)
+    for(i in 1:length(uniNpoints)){
+      CadiateNet_temp = BiocGenerics::which(dropoutMatrix_log==uniNpoints[i],arr.ind = TRUE,useNames = T)
+      CadiateNet_temp = CadiateNet_temp[sample(nrow(CadiateNet_temp),
+                                               round(n.randNet/length(uniNpoints),0),
+                                               replace = T),] # sampling network for each dropout degree
+      CadiateNet_temp = data.frame(source=CadidateGene[CadiateNet_temp[,1]],
+                                   target=CadidateGene[CadiateNet_temp[,2]])
+      CadiateNet = rbind(CadiateNet,CadiateNet_temp)
+    }
   }
   CadiateNet = preFilterNet(CadiateNet,counts)
 
@@ -159,18 +172,23 @@ creatNEAModel<-function(counts,
   # test degree
   CadiateNet_samll = NULL
   message('creat random net')
-  if(length(names(Likelihood[rownames(ExpData)][Likelihood[rownames(ExpData)]>0.95]))>=100){
-    sn <-  sample(names(Likelihood[rownames(ExpData)][Likelihood[rownames(ExpData)]>0.95]),100)
-  }else{
-    sn <- sample(names(Likelihood[rownames(ExpData)]),
-                 pmin(100,length(names(Likelihood[rownames(ExpData)]))),
-                 prob = Likelihood[rownames(ExpData)])
-  }
+  if (directed_bipartite_mode) {
+    CadiateNet_samll <- randomize_directed_bipartite_network(attr(Likelihood, "template_network"),
+                                                             n.edge = max(n.randNet, 3000))
+  } else {
+    if(length(names(Likelihood[rownames(ExpData)][Likelihood[rownames(ExpData)]>0.95]))>=100){
+      sn <-  sample(names(Likelihood[rownames(ExpData)][Likelihood[rownames(ExpData)]>0.95]),100)
+    }else{
+      sn <- sample(names(Likelihood[rownames(ExpData)]),
+                   pmin(100,length(names(Likelihood[rownames(ExpData)]))),
+                   prob = Likelihood[rownames(ExpData)])
+    }
 
-  CadiateNet_samll=lapply(1:length(sn), function(x)sample(rownames(ExpData),pmin(300,nrow(ExpData))))
-  names(CadiateNet_samll) = sn
-  CadiateNet_samll = List2dataFrame(CadiateNet_samll)
-  colnames(CadiateNet_samll) = c('source','target')
+    CadiateNet_samll=lapply(1:length(sn), function(x)sample(rownames(ExpData),pmin(300,nrow(ExpData))))
+    names(CadiateNet_samll) = sn
+    CadiateNet_samll = List2dataFrame(CadiateNet_samll)
+    colnames(CadiateNet_samll) = c('source','target')
+  }
   CadiateNet_samll$npoint_log = dropoutMatrix_log[sub2ind(match(CadiateNet_samll[,1],rownames(dropoutMatrix_log)),
                                                           match(CadiateNet_samll[,2],rownames(dropoutMatrix_log)),
                                                           nrow = nrow(dropoutMatrix_log),ncol = ncol(dropoutMatrix_log))]
@@ -201,6 +219,7 @@ creatNEAModel<-function(counts,
                       AdModelList_2=RawDistrbution.cDiv)
   #
   CadiateNet_samll$LR = pmin(Likelihood[CadiateNet_samll$source],Likelihood[CadiateNet_samll$target])
+  CadiateNet_samll$LR[is.na(CadiateNet_samll$LR)] <- 1
   CadiateNet_samll = CadiateNet_samll[CadiateNet_samll$LR>0.99,]
   NetList=tapply(c(1:nrow(CadiateNet_samll),1:nrow(CadiateNet_samll)), c(CadiateNet_samll$source,CadiateNet_samll$target), list)
   DegreeD = table(unlist(CadiateNet_samll[,1:2]))
@@ -1374,5 +1393,3 @@ detect_outliers_iqr <- function(x, coef = 1.5) {
     upper   = upper
   )
 }
-
-
