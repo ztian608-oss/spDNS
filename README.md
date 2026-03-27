@@ -61,6 +61,57 @@ rand_net <- randomize_directed_bipartite_network(sf_event_net, n.edge = nrow(sf_
 
 ### 3.3 条件差异分析（SF 活性）
 
+下面给一个最小可运行示例（两组条件：`Case` vs `Ctrl`）：
+
+```r
+# 输入：
+# sf_expr:      行是 SF，列是细胞（表达矩阵）
+# psi_mat:      行是 splicing_event，列是细胞（PSI 矩阵）
+# sf_event_net: 两列 SF / splicing_event（可选 weight）
+# condition:    每个细胞对应的分组标签（长度 = ncol(sf_expr)）
+
+# 1) 先计算每个细胞的 SF 活性分数（SF x cell）
+sf_activity <- compute_sf_activity_score(
+  sf_expression   = sf_expr,
+  psi             = psi_mat,
+  sf_event_network = sf_event_net,
+  center_psi      = TRUE,
+  min_events      = 3
+)
+
+# 2) 按条件做差异分析（默认 Wilcoxon）
+res_sf <- differential_sf_activity(
+  sf_activity = sf_activity,
+  condition   = condition,
+  contrast    = c("Case", "Ctrl"),
+  method      = "wilcox"
+)
+
+# 查看显著 SF（按 FDR + |delta| 已排序）
+head(res_sf, 20)
+```
+
+输出 `res_sf` 关键列说明：
+- `SF`：剪接因子名称
+- `mean_a` / `mean_b`：两组的平均 SF 活性
+- `delta`：`mean_a - mean_b`（这里是 `Case - Ctrl`）
+- `p_value`：统计检验 P 值
+- `FDR`：多重检验校正后的 q 值（BH）
+
+可选：若你还想看“网络重连（rewiring）”而不仅是活性差异：
+
+```r
+rewire_res <- detect_sf_rewiring(
+  sf_expression   = sf_expr,
+  psi             = psi_mat,
+  sf_event_network = sf_event_net,
+  condition       = setNames(condition, colnames(sf_expr)),
+  contrast        = c("Case", "Ctrl"),
+  cor_method      = "spearman"
+)
+head(rewire_res, 20)
+```
+
 ## 4. 与原 scDNS 主流程的关系
 
 `spDNS` 保持原 scDNS 主流程接口：
