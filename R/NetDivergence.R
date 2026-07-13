@@ -26,6 +26,7 @@
 #'
 #' @examples
 #' @keywords internal
+#' @noRd
 getKLD_cKLDnetwork<-function(ExpData,
                              Network = NULL,
                              GroupLabel = NULL,
@@ -224,6 +225,7 @@ getKLD_cKLDnetwork<-function(ExpData,
   return(res)
 }
 #' @keywords internal
+#' @noRd
 setNoiseToZero<-function(x,noiseIndex){
   x[noiseIndex]=0
   x
@@ -238,6 +240,7 @@ setNoiseToZero<-function(x,noiseIndex){
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 setNoiseToNA<-function(x,noiseIndex){
   x[noiseIndex]=NA
   x
@@ -255,7 +258,6 @@ setNoiseToNA<-function(x,noiseIndex){
 #'
 #' @return
 #' @keywords internal
-#' @export
 #' @noRd
 #'
 #' @examples
@@ -500,6 +502,7 @@ getKDEnet<-function(ExpDataDT,
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 CoarseGrainingDensity<-function(rawDensity,
                                 n.coarse,
                                 n.grid=NULL){
@@ -529,6 +532,7 @@ CoarseGrainingDensity<-function(rawDensity,
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 rmTechnologyNoise<-function(DensityD,
                             min.pt=0.7,
                             min.density=10/((10)^2*pi)*9){
@@ -866,6 +870,7 @@ getTechnologyNoiseData_towDS <- function(DS1,
 #'
 #' @examples
 #'
+#' @noRd
 removeNoiseInCDS_towDS<-function(DS1,
                                  DS2,
                                  cDSList_1,
@@ -903,6 +908,7 @@ removeNoiseInCDS_towDS<-function(DS1,
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 getKNNRadius <- function(ExpDataDT,
                          Network,
                          GridData,
@@ -966,6 +972,7 @@ getKNNRadius <- function(ExpDataDT,
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 getRawDensityKNN_byRadius<-function(Radius_md,k){
   # calculating radius
   # Radius_md[Radius_md>=k]=k #
@@ -987,6 +994,7 @@ getRawDensityKNN_byRadius<-function(Radius_md,k){
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 NormalizeToOne_bygorup <- function(ColData,label) {
   if(!is.matrix(ColData)){
     ColData = matrix(ColData,nrow = 1)
@@ -1011,6 +1019,7 @@ NormalizeToOne_bygorup <- function(ColData,label) {
 #'
 #' @examples
 #' mappingMinMaxRow(matrix(0:24,5),minD=1,maxD=60,rmZero = TRUE)
+#' @noRd
 mappingMinMaxRow<-function(ma,
                            minD=1,
                            maxD=60,

@@ -205,9 +205,9 @@ build_network_by_group_generalized <- function(
 #' @param save_intermediate
 #'
 #' @return
-#' @export
 #'
 #' @examples
+#' @noRd
 run_network_pipeline <- function(
     seurat_obj,
     group_col,

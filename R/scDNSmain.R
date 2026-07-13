@@ -56,8 +56,13 @@ CreatScDNSobject <- function(counts,
                              n.dropGene = 3000,
                              n.randNet = 20000,
                              sdBias=1.1,
-                             parllelModel=c('foreach','bplapply')[1]){
+                             parllelModel=c('foreach','bplapply')[1],
+                             network.type = c("gene_gene", "sf_event")){
+  network.type <- match.arg(network.type)
   #01
+  if(is.null(Network) && network.type == "sf_event") {
+    stop("A predefined SF-to-event Network is required in sf_event mode.", call. = FALSE)
+  }
   if(is.null(Network)){
     data(scDNSBioNet)
     message('No network is provided, we load the internal network.')
@@ -66,6 +71,10 @@ CreatScDNSobject <- function(counts,
   if(is.null(data)){
     message('Data is not provided, we will normalize with NormalizeData functions.')
     data <- NormalizeData(counts)
+  }
+  .validate_scDNS_inputs(counts, data, GroupLabel, network.type)
+  if (network.type == "sf_event") {
+    Network <- .prepare_sf_event_network(Network, rownames(data))
   }
   #02
   Div.Parameters <- list(k= k,
@@ -91,7 +100,10 @@ CreatScDNSobject <- function(counts,
                          sdBias=sdBias)
   #03
   message('get dropout for each gene pairs.')
-  Network = getDoubleDropout(Network = Network,counts = counts)
+  network_template <- Network
+  Network = getDoubleDropout(Network = Network, counts = counts,
+                             ignore_direction = network.type != "sf_event")
+  Network <- .copy_bipartite_attributes(network_template, Network)
   # smooth OutLier value
   # message('Smooth OutLier value.')
   # data = SmoothOutLier_UP(data)
@@ -116,7 +128,13 @@ CreatScDNSobject <- function(counts,
                      JDensity_A = matrix(),
                      JDensity_B = matrix(),
                      uniCase = uniCase,
-                     Other=list())
+                     Other=if (network.type == "sf_event") list(
+                       network_type = "sf_event",
+                       source_nodes = unique(Network$source),
+                       target_nodes = unique(Network$target),
+                       source_data_type = "SF_expression_0_1",
+                       target_data_type = "event_PSI_0_1"
+                     ) else list(network_type = "gene_gene"))
   scDNSobject
 
 
@@ -195,6 +213,7 @@ scDNS_1_CalDivs <- function(scDNSobject,
 
   # scDNSobject@Div.Parameters <- Div.Parameters
 
+  network_template <- scDNSobject@Network
   NetDivs <- getKLD_cKLDnetwork(scDNSobject@data,
                      Network = scDNSobject@Network,
                      GroupLabel = scDNSobject@GroupLabel,
@@ -214,7 +233,7 @@ scDNS_1_CalDivs <- function(scDNSobject,
                      returnCDS = FALSE,
                      Div_weight = scDNSobject@Div.Parameters$Div_weight,
                      parllelModel = scDNSobject@Div.Parameters$parllelModel)
-  scDNSobject@Network <- NetDivs$Network
+  scDNSobject@Network <- .copy_bipartite_attributes(network_template, NetDivs$Network)
   scDNSobject@JDensity_A <- NetDivs$ContextA_DS
   scDNSobject@JDensity_B <- NetDivs$ContextB_DS
   scDNSobject@uniCase <- NetDivs$uniCase
@@ -235,9 +254,9 @@ scDNS_1_CalDivs <- function(scDNSobject,
 #'
 #' @return
 #' scDNSobject
-#' @export
 #'
 #' @examples
+#' @noRd
 scDNS_2_creatNEAModel <- function(scDNSobject,
                                   n.dropGene = NULL,
                                   n.randNet = NULL,
@@ -290,9 +309,9 @@ scDNS_2_creatNEAModel <- function(scDNSobject,
 #'
 #' @return
 #' scDNSobject
-#' @export
 #'
 #' @examples
+#' @noRd
 scDNS_3_GeneZscore <- function(scDNSobject){
   scDNSobject <- getZscore(EdgeScore = scDNSobject,
                             NEAModel = scDNSobject@NEAModel,
@@ -318,6 +337,9 @@ scDNS_4_scContribution <- function(scDNSobject,
                                    Pval_col = 'p_comb',
                                    sigGene=NULL,
                                    q.th=0.01,...){
+  if (identical(scDNSobject@Other$network_type, "sf_event") && is.null(sigGene)) {
+    sigGene <- unique(scDNSobject@Network$source)
+  }
   if(is.null(topGene)){
     if(is.null(sigGene)){
       Zscore <- scDNSobject@Zscore
@@ -384,9 +406,9 @@ scDNS_4_scContribution <- function(scDNSobject,
 #'
 #' @return
 #' seurat object
-#' @export
 #'
 #' @examples
+#' @noRd
 scDNS_5_cluster <- function(scDNSobj,
                           Sobj,biasToscDNS=1,resolution=0.5,merge.red='pca',red.NewName='scDNS'){
   scCC <- Zscore <- scDNSobj@scZscore
@@ -403,7 +425,4 @@ scDNS_5_cluster <- function(scDNSobj,
                         resolution = resolution)
   Sobj
 }
-
-
-
 

@@ -1,180 +1,187 @@
 # spDNS
 
-`spDNS` 是在 `scDNS` 基础上做的结构层扩展版本，目标是支持 **有向二部调控网络** 分析（例如：**Splicing Factor, SF → Splicing Event**）。
+spDNS is an extension of scDNS for single-cell splicing-regulatory network
+analysis.
 
-> 关键原则：
-> - ✅ 保留原有 activity score 与下游统计流程
-> - ✅ 只扩展网络结构处理与随机网络生成
+The original scDNS framework quantifies condition-associated changes in
+pairwise network relationships using joint and conditional probability
+distributions, Jensen-Shannon divergence, network-based null models,
+node-level Z-scores, and cell-specific point-wise divergence.
 
----
+**spDNS retains the original scDNS network-divergence framework and adapts it
+to integrated splicing-factor expression and splicing-event PSI data connected
+by a predefined directed bipartite SF-to-event network.**
 
-## 1. 安装
+spDNS introduces three primary adaptations:
 
-仓库地址：`ztian608-oss/spDNS`
+1. **Heterogeneous node integration:** source nodes contain splicing-factor
+   expression and target nodes contain splicing-event PSI.
+2. **Scale harmonization:** SF expression is transformed to a bounded 0-1
+   scale, matching the numerical range of PSI.
+3. **Directed bipartite topology:** observed and randomized networks preserve
+   the SF-to-event direction, SF out-degree, and event in-degree.
+
+spDNS does not reconstruct the SF-event network de novo. A predefined
+SF-to-event network must be supplied. It does not perform PSI imputation,
+event-coordinate matching, disease-specific preprocessing, GAT or Node2Vec
+network reconstruction, graph contrastive learning, or automatic expansion
+of an SF-to-gene network. It does not define its result as absolute SF
+activity.
+
+spDNS is derived from scDNS and retains its original network-divergence and
+cell-contribution framework. The S4 class remains named `scDNS`, and the five
+core function names are retained for compatibility.
+
+## Installation
 
 ```r
-# install.packages("devtools")
 devtools::install_github("ztian608-oss/spDNS")
+library(spDNS)
 ```
 
----
+## Input contract
 
-## 2. 适用场景
-
-原始网络通常是：
-- `SF -> target_gene`
-
-但剪接分析需要：
-- `SF -> splicing_event`
-
-因此在主流程前，需要先做网络展开（gene 映射到 event）。
-
----
-
-## 3. 新增函数概览
-
-### 3.1 `expand_network_to_events()`
-将 `SF -> gene` 网络按 `gene -> splicing_event` 映射展开为 `SF -> event`。
+The `data` matrix is node by cell:
 
 ```r
-sf_event_net <- expand_network_to_events(
-  sf_gene_network = sf_gene_net,   # columns: SF, target_gene
-  gene_event_map  = gene_event_map # columns: gene, splicing_event
-)
+data_mat <- rbind(sf_data, event_psi)
 ```
 
-输出网络列为：
-- `source`（SF）
-- `target`（splicing event）
+- `sf_data`: SF by cell, with values in 0-1.
+- `event_psi`: event by the same cells, with PSI retained in 0-1.
+- SF expression and event PSI are harmonized to a common bounded numerical
+  range of 0-1. This does not mean that they have identical statistical
+  distributions.
+- The network has exactly the directed interpretation `source SF -> target
+  splicing event`. Source and target node sets must not overlap.
 
-并自动写入 directed-bipartite 属性，供后续随机网络生成与去重使用。
-
-### 3.2 `randomize_directed_bipartite_network()`
-用于有向二部网络的随机化，满足：
-- 保持 `source` 出度（out-degree）
-- 保持 `target` 入度（in-degree）
-- 保持二部方向（只允许 SF->event）
+The inherited `counts` slot is assembled as:
 
 ```r
-rand_net <- randomize_directed_bipartite_network(sf_event_net, n.edge = nrow(sf_event_net))
+counts_mat <- rbind(sf_counts, event_support)
 ```
 
-### 3.3 条件差异分析（SF 活性）
+`sf_counts` contains raw SF expression counts. `event_support` should
+preferably contain the real event denominator/support. If support is not
+available, a matrix of ones may be used only as a structural compatibility
+placeholder.
 
-下面给一个最小可运行示例（两组条件：`Case` vs `Ctrl`）：
+**A constant event-count matrix is only a compatibility placeholder for the
+inherited scDNS object structure and does not represent actual event read
+support.** Consequently, dropout/support adjustment for those event rows must
+not be interpreted as measured event coverage.
+
+`counts_mat` and `data_mat` must have identical row names, column names, and
+ordering. `GroupLabel` must follow the cell-column order.
+
+## Transforming SF expression
+
+Before entering the five-step workflow, transform all cells participating in
+the comparison together. Do not transform each condition separately.
 
 ```r
-# 输入：
-# sf_expr:      行是 SF，列是细胞（表达矩阵）
-# psi_mat:      行是 splicing_event，列是细胞（PSI 矩阵）
-# sf_event_net: 两列 SF / splicing_event（可选 weight）
-# condition:    每个细胞对应的分组标签（长度 = ncol(sf_expr)）
+sf_data_log <- sweep(sf_counts, 2, Matrix::colSums(sf_counts), "/")
+sf_data_log <- log1p(sf_data_log * 10000)
 
-# 1) 先计算每个细胞的 SF 活性分数（SF x cell）
-sf_activity <- compute_sf_activity_score(
-  sf_expression   = sf_expr,
-  psi             = psi_mat,
-  sf_event_network = sf_event_net,
-  center_psi      = TRUE,
-  min_events      = 3
-)
+z_cdf01_row <- function(x) {
+  mu <- mean(x, na.rm = TRUE)
+  sigma <- sd(x, na.rm = TRUE)
+  if (!is.finite(mu) || !is.finite(sigma) || sigma == 0) {
+    return(rep(0.5, length(x)))
+  }
+  y <- pnorm((x - mu) / sigma)
+  y[!is.finite(y)] <- 0.5
+  y
+}
 
-# 2) 按条件做差异分析（默认 Wilcoxon）
-res_sf <- differential_sf_activity(
-  sf_activity = sf_activity,
-  condition   = condition,
-  contrast    = c("Case", "Ctrl"),
-  method      = "wilcox"
-)
-
-# 查看显著 SF（按 FDR + |delta| 已排序）
-head(res_sf, 20)
+sf_data <- t(apply(sf_data_log, 1, z_cdf01_row))
 ```
 
-输出 `res_sf` 关键列说明：
-- `SF`：剪接因子名称
-- `mean_a` / `mean_b`：两组的平均 SF 活性
-- `delta`：`mean_a - mean_b`（这里是 `Case - Ctrl`）
-- `p_value`：统计检验 P 值
-- `FDR`：多重检验校正后的 q 值（BH）
+The package uses the same single internal implementation,
+`transform_sf_expression_01()`. It transforms each SF independently across all
+compared cells, maps zero-variance SFs to 0.5, and preserves within-SF cell
+ordering. PSI is not z-scored or CDF-transformed.
 
-可选：若你还想看“网络重连（rewiring）”而不仅是活性差异：
+## Five-step sf_event workflow
 
 ```r
-rewire_res <- detect_sf_rewiring(
-  sf_expression   = sf_expr,
-  psi             = psi_mat,
-  sf_event_network = sf_event_net,
-  condition       = setNames(condition, colnames(sf_expr)),
-  contrast        = c("Case", "Ctrl"),
-  cor_method      = "spearman"
-)
-head(rewire_res, 20)
-```
+library(spDNS)
 
-## 4. 与原 scDNS 主流程的关系
+# sf_data: SF x cell, values in 0-1
+# event_psi: event x cell, values in 0-1
+data_mat <- rbind(sf_data, event_psi)
 
-`spDNS` 保持原 scDNS 主流程接口：
+# event_support should contain measured support when available.
+counts_mat <- rbind(sf_counts, event_support)
 
-```r
-# 1) 预处理：先扩展网络
-sf_event_net <- expand_network_to_events(sf_gene_net, gene_event_map)
-
-# 2) 构建对象（原函数）
 obj <- CreatScDNSobject(
   counts = counts_mat,
-  data = expr_mat,
-  Network = sf_event_net,
-  GroupLabel = group_label
+  data = data_mat,
+  Network = sf_event_network,
+  GroupLabel = group_vector,
+  network.type = "sf_event"
 )
 
-# 3) 计算网络散度（原函数）
-obj <- scDNS_1_CalDivs(obj)
+obj <- scDNS_1_CalDivs(scDNSobject = obj)
 
-# 4) 建模（原函数；内部已支持 directed-bipartite 随机网络）
-obj <- scDNS_2_creatNEAModel_v2(obj)
+obj <- scDNS_2_creatNEAModel_v2(
+  scDNSobject = obj,
+  n.randNet = 5000
+)
 
-# 5+) 下游步骤按原流程继续
-# obj <- scDNS_3_GeneZscore_v2(obj)
-# obj <- scDNS_4_scContribution(obj)
+obj <- scDNS_3_GeneZscore_v2(scDNSobject = obj)
+
+obj <- scDNS_4_scContribution(
+  scDNSobject = obj,
+  sigGene = unique(sf_event_network$source),
+  q.th = 1
+)
 ```
 
----
+The inherited joint-density, conditional-density, JSD/KLD, coarse-graining,
+GeneVariability, dropout/support adjustment, degree normalization, random
+network fitting, label shuffling, node Z-score, combined Z-score, P-value/FDR,
+point-wise divergence, and single-cell contribution calculations are retained.
 
-## 5. 本次扩展“改了什么 / 没改什么”
+## Outputs and interpretation
 
-### 改了（仅结构层）
-1. 网络展开（`SF->gene` 到 `SF->event`）
-2. 有向二部图去重（避免把 `A->B` 与 `B->A` 合并）
-3. 有向二部图度保持随机网络生成
+- `obj@Network`: edge-level SF-event divergence results.
+- `obj@Zscore`: source and target node-level perturbation scores, P values and
+  ranks. `node_type` identifies `SF` and `splicing_event`; primary
+  interpretation is restricted to source-side SFs.
+- `obj@scZscore`: cell-specific SF perturbation contribution matrix. In
+  `sf_event` mode it is SF by cell.
 
-### 没改（算法层）
-1. activity score 计算公式
-2. 下游统计与差异分析逻辑
-3. 输出主结构格式
+The SF-level score represents condition-associated perturbation of the
+relationship between an SF and its connected splicing-event module. It is not
+an SF expression fold change, absolute SF activity, activation/repression
+score, or mutation probability. Event-level node scores are retained as
+auxiliary output.
 
----
+## Original gene_gene mode
 
-## 6. 输入数据建议
+The original gene-gene workflow remains the default:
 
-- `sf_gene_network`：至少包含 `SF`, `target_gene`
-- `gene_event_map`：至少包含 `gene`, `splicing_event`
-- `counts/data`：保持与原 scDNS 使用要求一致
-- `Network` 列名建议使用 `source/target`（主流程内部默认前两列为边）
+```r
+obj <- CreatScDNSobject(
+  counts = gene_counts,
+  data = gene_data,
+  Network = gene_network,
+  GroupLabel = group_vector,
+  network.type = "gene_gene"
+)
+```
 
----
+Omitting `network.type` is equivalent to `network.type = "gene_gene"`.
 
-## 7. 常见问题
+## Citation and license
 
-### Q1: 必须先调用 `expand_network_to_events()` 吗？
-若你分析的是 SF→event 场景，建议必须先调用；否则主流程看到的仍是 gene-level 网络。
+spDNS is derived from the original
+[scDNS repository](https://github.com/HChaoLab/scDNS). Please cite the
+original work described by its authors as *scDNS: Characterizing Gene
+Perturbations in Single Cells via Network Divergence Analysis* (2025), as well
+as this software adaptation. See `NOTICE` and `inst/CITATION`.
 
-### Q2: 会不会影响原 scDNS 结果可比性？
-不会。若仍使用原 gene-gene 网络，流程行为与原版保持一致（结构扩展逻辑仅在 directed-bipartite 场景触发）。
-
----
-
-## 8. License
-
-沿用项目原有 License 约定。
-
+The original scDNS repository permits academic and research use and restricts
+commercial use without prior written permission. spDNS is distributed under
+the same restrictions; see `LICENSE`.

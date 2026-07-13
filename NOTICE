@@ -1,0 +1,18 @@
+spDNS is derived from scDNS and retains its original network-divergence and
+cell-contribution framework.
+
+Original project: https://github.com/HChaoLab/scDNS
+Original author: Chao Huang
+Original citation supplied by scDNS:
+"scDNS: Characterizing Gene Perturbations in Single Cells via Network
+Divergence Analysis." (2025).
+
+spDNS adaptations:
+- integration of SF expression and event PSI;
+- per-SF transformation of expression to a 0-1 scale;
+- strict directed SF-to-event topology;
+- directed bipartite degree-preserving randomization; and
+- SF-focused node-level and cell-level interpretation.
+
+The original scDNS mathematical methods are retained and are not claimed as
+new inventions of spDNS.

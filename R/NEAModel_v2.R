@@ -58,8 +58,11 @@ scDNS_2_creatNEAModel_v2 <- function (scDNSobject, n.dropGene = NULL, n.randNet 
     colnames(obs_net)[1:2] <- c("source", "target")
     obs_net <- obs_net[obs_net$source %in% rownames(ExpData) &
                          obs_net$target %in% rownames(ExpData), , drop = FALSE]
-    CandidateNet_samll <- randomize_directed_bipartite_network(obs_net,
-                                                               n.edge = max(scDNSobject@NEA.Parameters$n.randNet, nrow(obs_net)))
+    attr(obs_net, "directed_bipartite") <- TRUE
+    attr(obs_net, "left_nodes") <- scDNSobject@Other$source_nodes
+    attr(obs_net, "right_nodes") <- scDNSobject@Other$target_nodes
+    CandidateNet_samll <- .random_bipartite_edge_pool(
+      obs_net, scDNSobject@NEA.Parameters$n.randNet)
     CandidateNet_samll <- as.data.frame(CandidateNet_samll)
   } else {
     if (length(names(Likelihood[rownames(ExpData)][Likelihood[rownames(ExpData)] >
@@ -736,8 +739,13 @@ scDNS_3_GeneZscore_v2 <- function(scDNSobject,reCreatNEA=FALSE,PositiveGene=NULL
   scDNSobject@NEAModel$ZscoreList <- Zscore
   Zscore_res <- Res_RandDistrubution$Zscores
   Zscore_res[,colnames(p_combine)] <- p_combine
+  if (identical(scDNSobject@Other$network_type, "sf_event")) {
+    Zscore_res$node_type <- ifelse(Zscore_res$Gene %in% scDNSobject@Other$source_nodes,
+                                   "SF", "splicing_event")
+  }
   scDNSobject@Zscore <- Zscore_res
-  scDNSobject@Network <- Res_RandDistrubution$Network
+  scDNSobject@Network <- .copy_bipartite_attributes(scDNSobject@Network,
+                                                     Res_RandDistrubution$Network)
   scDNSobject
 }
 

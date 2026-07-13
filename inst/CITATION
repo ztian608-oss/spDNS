@@ -1,0 +1,18 @@
+citHeader("To cite spDNS, cite both the original scDNS framework and this software adaptation.")
+
+citEntry(
+  entry = "Manual",
+  title = "scDNS: Characterizing Gene Perturbations in Single Cells via Network Divergence Analysis",
+  author = personList(as.person("Chao Huang")),
+  year = "2025",
+  note = "Original network-divergence and cell-contribution framework",
+  url = "https://github.com/HChaoLab/scDNS"
+)
+
+citEntry(
+  entry = "Manual",
+  title = "spDNS: Network Divergence Analysis of Splicing Regulation in Single Cells",
+  author = personList(as.person("Tian Zhang")),
+  year = "2026",
+  url = "https://github.com/ztian608-oss/spDNS"
+)
