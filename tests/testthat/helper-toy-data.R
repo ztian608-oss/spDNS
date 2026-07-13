@@ -20,3 +20,26 @@ make_toy_spdns <- function(seed = 123L, n_cell = 60L) {
   list(counts = rbind(sf_counts, event_support), data = rbind(sf_data, event_psi),
        network = net, group = group, sf = sf, event = event, cells = cells)
 }
+
+make_integration_spdns <- function(seed = 123L, n_cell = 80L,
+                                   n_sf = 30L, n_event = 40L) {
+  set.seed(seed)
+  sf <- paste0("SF", seq_len(n_sf))
+  event <- paste0("EV", seq_len(n_event))
+  cells <- paste0("cell", seq_len(n_cell))
+  group <- rep(c("A", "B"), each = n_cell / 2)
+  sf_counts <- matrix(rpois(n_sf * n_cell, 8) + 1, nrow = n_sf,
+                      dimnames = list(sf, cells))
+  event_support <- matrix(rpois(n_event * n_cell, 5) + 1, nrow = n_event,
+                          dimnames = list(event, cells))
+  sf_data <- spDNS:::transform_sf_expression_01(sf_counts)
+  event_psi <- matrix(stats::runif(n_event * n_cell), nrow = n_event,
+                      dimnames = list(event, cells))
+  net <- do.call(rbind, lapply(seq_len(n_sf), function(i) data.frame(
+    source = sf[i],
+    target = event[((i - 1L) * 3L + 0:5) %% n_event + 1L],
+    stringsAsFactors = FALSE
+  )))
+  list(counts = rbind(sf_counts, event_support), data = rbind(sf_data, event_psi),
+       network = net, group = group, sf = sf, event = event, cells = cells)
+}
