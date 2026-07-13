@@ -205,7 +205,6 @@ build_network_by_group_generalized <- function(
 #' @param save_intermediate
 #'
 #' @return
-#' @export
 #'
 #' @examples
 run_network_pipeline <- function(

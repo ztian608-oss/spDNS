@@ -1,32 +1,31 @@
-Package: scDNS
+Package: spDNS
 Type: Package
-Title: Characterizing Gene Perturbations in Single Cells via Network Divergence Analysis
-Version: 0.2.0
-Author: Huang Chao
-Maintainer: The package maintainer <huangchao@xjtu.edu.cn>
-Description: We use single-cell transcriptomes to reflect the functional changes of genes under different conditions by characterizing the dynamic changes between genes.
-    Use four spaces when indenting paragraphs within the Description.
-License: The license is under xiaolab.
+Title: Network Divergence Analysis of Splicing Regulation in Single Cells
+Version: 0.3.0
+Authors@R: c(
+    person("Chao", "Huang", role = "aut",
+           comment = "Author of the original scDNS framework"),
+    person("Tian", "Zhang", email = "ztian608-oss@users.noreply.github.com",
+           role = c("cre", "ctb"),
+           comment = "spDNS directed-bipartite adaptation and package maintenance")
+    )
+Description: Extends the scDNS network-divergence framework to predefined
+    directed bipartite splicing-factor-to-splicing-event networks. The package
+    integrates splicing-factor expression transformed to a 0-1 scale with
+    splicing-event PSI, quantifies condition-associated changes in SF-event
+    relationships, ranks perturbed splicing factors, and maps perturbation
+    effects to individual cells. The original scDNS mathematical framework is
+    retained and is not claimed as newly invented by spDNS.
+License: file LICENSE
 Encoding: UTF-8
 LazyData: true
-Suggests: 
-    knitr,
-    rmarkdown
-VignetteBuilder: knitr
-Imports: 
-    patchwork,
-    ggnewscale,
-    sn,
-    BiocParallel,
-    minpack.lm,
-    stringr,
-    Rfast,
-    infotheo,
-    progress,
-    doSNOW,
-    parallel,
-    tictoc
-Depends: 
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+URL: https://github.com/ztian608-oss/spDNS,
+    https://github.com/HChaoLab/scDNS
+BugReports: https://github.com/ztian608-oss/spDNS/issues
+Depends:
+    R (>= 4.1),
     MatrixGenerics,
     data.table,
     BiocGenerics,
@@ -34,12 +33,30 @@ Depends:
     stringr,
     ggplot2,
     mixtools,
-    R (>= 2.10),
     BiocParallel,
     foreach,
     Seurat,
     ggpp,
     ghyp
-RoxygenNote: 7.1.2
-URL: https://github.com/HChaoLab/scDNS
-BugReports: https://github.com/HChaoLab/scDNS/issues
+Imports:
+    Matrix,
+    matrixStats,
+    methods,
+    parallel,
+    patchwork,
+    ggnewscale,
+    sn,
+    minpack.lm,
+    Rfast,
+    infotheo,
+    progress,
+    doSNOW,
+    tictoc,
+    stats,
+    utils
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr

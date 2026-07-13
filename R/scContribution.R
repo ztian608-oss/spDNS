@@ -538,7 +538,6 @@ scContribution_v3 <- function (scDNSobject, nx = 20, topGene = 100, sigGene = NU
 #' @param model
 #'
 #' @return
-#' @export
 #'
 #' @examples
 scContribution_v4 <- function (scDNSobject, nx = 20, topGene = 100, sigGene = NULL,rb=F,model=c('cDiv','Div','Plus')[3])

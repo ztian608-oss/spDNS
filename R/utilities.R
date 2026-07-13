@@ -4,7 +4,6 @@
 #' @param min.cellN The minimum number of cells in which a gene can be expressed (def:10)
 #'
 #' @return sob seurat object
-#' @export
 #'
 #' @examples
 rmNotExpressedGene<-function(sob,min.cellN=10){
@@ -56,7 +55,6 @@ rmNotExpressedGene<-function(sob,min.cellN=10){
 #' @param split.by group name to split data
 #'
 #' @return seurat object
-#' @export
 #'
 #' @examples
 Magic4MultipleData <- function(sob,split.by=NULL){
@@ -309,7 +307,6 @@ detect_Duplicate_edge4net <- function(net,
 #' @param ncol Number of columns in the matrix (not used in computation but included for clarity).
 #'
 #' @return A numeric scalar representing the linear index corresponding to the given row and column.
-#' @export
 #'
 #' @examples
 sub2ind <- function(r=2,c=3,nrow=5,ncol=5){
@@ -330,7 +327,6 @@ sub2ind <- function(r=2,c=3,nrow=5,ncol=5){
 #'
 #' @return An integer vector (or array index if arr.ind = TRUE is used) giving the
 #' positions of NA values in x.
-#' @export
 #'
 #' @examples
 which.na <- function(x,...){
@@ -403,7 +399,6 @@ getSubNetByNode <- function(Net,
 #' @param rel_large
 #'
 #' @return
-#' @export
 #'
 #' @examples
 theme_cowplot_i <- function (font_size = 14, font_family = "", line_size = 0.5,
@@ -475,7 +470,6 @@ theme_cowplot_i <- function (font_size = 14, font_family = "", line_size = 0.5,
 #' @param ...
 #'
 #' @return
-#' @export
 #'
 #' @examples
 AddBox <- function(size=1.1,...){
@@ -516,7 +510,6 @@ getCloseseData <- function(data,query,returnIndex=FALSE){
 #' @param showAllpoint
 #'
 #' @return
-#' @export
 #'
 #' @examples
 DensityPlotDF_withPoint <- function(x,y,colors=c('green','yellow','red','darkred'),
@@ -556,7 +549,6 @@ DensityPlotDF_withPoint <- function(x,y,colors=c('green','yellow','red','darkred
 #' @param keep.ticks
 #'
 #' @return
-#' @export
 #'
 #' @examples
 NoAxes2 <- function (..., keep.axis.text = FALSE,keep.axis.title = FALSE,  keep.ticks = FALSE) {
@@ -653,7 +645,6 @@ GeneInteraction <- function(scDNSobject,
 #' @param RepData
 #'
 #' @return
-#' @export
 #'
 #' @examples
 replace2 <- function(x,RawData,RepData){
@@ -672,7 +663,6 @@ replace2 <- function(x,RawData,RepData){
 #' @param font Helvetica
 #'
 #' @return
-#' @export
 #'
 #' @examples
 theme_pretty <- function(fontsize = 10, font = "Helvetica"){
@@ -692,7 +682,6 @@ theme_pretty <- function(fontsize = 10, font = "Helvetica"){
 #' @param font Helvetica
 #'
 #' @return
-#' @export
 #'
 #' @examples
 theme_pretty_NoBox <- function (fontsize = 10, font = "Helvetica") {

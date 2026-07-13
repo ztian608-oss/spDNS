@@ -4,7 +4,6 @@
 #' @param GAT_outNet
 #'
 #' @return scDNSob
-#' @export
 #'
 #' @examples
 filterNetowrkFromGAT <- function(scDNSob,GAT_outNet='./data/attention_layer1_epoch1000_wide_confidence.csv'){
@@ -24,7 +23,6 @@ filterNetowrkFromGAT <- function(scDNSob,GAT_outNet='./data/attention_layer1_epo
 #' @param rmP the threshold of significance(def:0.01)
 #'
 #' @return
-#' @export
 #'
 #' @examples
 filterNetowrkFromDREMI <- function(scDNSob,rmP=0.01){

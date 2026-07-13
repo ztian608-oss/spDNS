@@ -83,8 +83,7 @@ creatNEAModel<-function(counts,
   message('Rand network')
   CadiateNet = NULL
   if (directed_bipartite_mode) {
-    CadiateNet <- randomize_directed_bipartite_network(attr(Likelihood, "template_network"),
-                                                       n.edge = n.randNet)
+    CadiateNet <- .random_bipartite_edge_pool(attr(Likelihood, "template_network"), n.randNet)
     CadiateNet <- CadiateNet[CadiateNet$source %in% rownames(dropoutMatrix_log) &
                                CadiateNet$target %in% rownames(dropoutMatrix_log), , drop = FALSE]
   } else {
@@ -173,8 +172,8 @@ creatNEAModel<-function(counts,
   CadiateNet_samll = NULL
   message('creat random net')
   if (directed_bipartite_mode) {
-    CadiateNet_samll <- randomize_directed_bipartite_network(attr(Likelihood, "template_network"),
-                                                             n.edge = max(n.randNet, 3000))
+    CadiateNet_samll <- .random_bipartite_edge_pool(
+      attr(Likelihood, "template_network"), max(n.randNet, 3000))
   } else {
     if(length(names(Likelihood[rownames(ExpData)][Likelihood[rownames(ExpData)]>0.95]))>=100){
       sn <-  sample(names(Likelihood[rownames(ExpData)][Likelihood[rownames(ExpData)]>0.95]),100)

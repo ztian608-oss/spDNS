@@ -255,7 +255,6 @@ setNoiseToNA<-function(x,noiseIndex){
 #'
 #' @return
 #' @keywords internal
-#' @export
 #' @noRd
 #'
 #' @examples

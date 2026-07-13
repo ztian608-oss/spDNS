@@ -9,7 +9,6 @@
 #' @param titleSzie The base font size to be used for plot titles and subtitles, passed to the internal plotting function FontSize. Default is 10.
 #'
 #' @return
-#' @export
 #'
 #' @examples
 densityCompare <- function(scDNSobject,Nodes,EdgeID=NULL,interpolate=FALSE,filp=FALSE,subEdgeID=1,titleSzie=10){
@@ -179,7 +178,6 @@ densityCompare2 <- function(netRes,Nodes,EdgeID=NULL,interpolate=FALSE,filp=FALS
 #' @param ncol The number of columns to use when arranging the resulting plots (default is 5).
 #'
 #' @return ggplot object
-#' @export
 #'
 #' @examples
 #'
@@ -301,7 +299,6 @@ densityCompare3 <- function (scDNSobject, Nodes, topEdge=10,
 #' @param darkOtherGene If TRUE, all genes that are not labeled or highlighted (label is NA and not a highlightGene).
 #'
 #' @return
-#' @export
 #'
 #' @examples
 plot_diffFC_scDNS_Zscore <- function(Zscores,
