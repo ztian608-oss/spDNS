@@ -1,5 +1,6 @@
 #' Transform SF expression to a bounded 0-1 scale
 #' @keywords internal
+#' @noRd
 transform_sf_expression_01 <- function(sf_counts) {
   if (is.null(rownames(sf_counts)) || is.null(colnames(sf_counts)))
     stop("sf_counts must have row and column names.", call. = FALSE)

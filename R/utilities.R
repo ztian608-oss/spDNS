@@ -6,6 +6,7 @@
 #' @return sob seurat object
 #'
 #' @examples
+#' @noRd
 rmNotExpressedGene<-function(sob,min.cellN=10){
 
   rmSomeGene_Seurate <-   function(object, pattern = NULL, features = NULL, col.name = NULL,
@@ -57,6 +58,7 @@ rmNotExpressedGene<-function(sob,min.cellN=10){
 #' @return seurat object
 #'
 #' @examples
+#' @noRd
 Magic4MultipleData <- function(sob,split.by=NULL){
   sob_list <- SplitObject(sob,split.by =split.by )
   sob_list <- lapply(sob_list, function(x)Rmagic::magic(x))
@@ -75,6 +77,7 @@ Magic4MultipleData <- function(sob,split.by=NULL){
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 CalGeneInfAmount <- function(ExpMat,
                              probs = 0.99,
                              rescale=FALSE,
@@ -129,6 +132,7 @@ CalGeneInfAmount <- function(ExpMat,
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 SmoothOutLier_UP <- function(mt,zero.rm=TRUE,percentile=0.99){
   mt2 = mt
   if(zero.rm){
@@ -163,6 +167,7 @@ SmoothOutLier_UP <- function(mt,zero.rm=TRUE,percentile=0.99){
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 DetectOutlierBy3kBoxplot_UP <- function(m,zero.rm=TRUE){
   if(!zero.rm){
     eachPercent = sparseMatrixStats::rowQuantiles(m,na.rm = TRUE,probs = c(0.25,0.75),drop = F)
@@ -197,6 +202,7 @@ DetectOutlierBy3kBoxplot_UP <- function(m,zero.rm=TRUE){
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 getDoubleDropout <- function(Network,counts,ignore_direction = TRUE){
   Network = preFilterNet(BioNet = Network,CountData = counts, ignore_direction = ignore_direction)
   counts = counts[rownames(counts)%in%(unlist(Network[,1:2])%>%unique()),]
@@ -220,6 +226,7 @@ getDoubleDropout <- function(Network,counts,ignore_direction = TRUE){
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 preFilterNet <- function(BioNet,CountData,ignore_direction = TRUE){
   #@@@@@@@@@@@@@
   message('Step1: remove edges that are not in the expression data')
@@ -256,6 +263,7 @@ preFilterNet <- function(BioNet,CountData,ignore_direction = TRUE){
 #' This function identifies duplicate edges in a two-column network representation.
 #' It can optionally treat edges as undirected (ignoring direction) and return either
 #' a logical vector indicating non-duplicate rows or a deduplicated network.
+#' @noRd
 
 #'
 #' @param net A two-column matrix or data frame representing edges (e.g., from-to pairs).
@@ -268,9 +276,11 @@ preFilterNet <- function(BioNet,CountData,ignore_direction = TRUE){
 #' with TRUE for unique (non-duplicate) edges. Otherwise, a matrix or data frame
 #' containing only the unique edges.
 #' @keywords internal
+#' @noRd
 
 #'
 #' @examples
+#' @noRd
 detect_Duplicate_edge4net <- function(net,
          ingnoreDireaction = TRUE,
          returnLogical = FALSE){
@@ -309,6 +319,7 @@ detect_Duplicate_edge4net <- function(net,
 #' @return A numeric scalar representing the linear index corresponding to the given row and column.
 #'
 #' @examples
+#' @noRd
 sub2ind <- function(r=2,c=3,nrow=5,ncol=5){
   ind = (c-1)*nrow + r
   return(ind)
@@ -316,6 +327,7 @@ sub2ind <- function(r=2,c=3,nrow=5,ncol=5){
 
 
 #' Find indices of missing values (NA) in a vector or array.
+#' @noRd
 
 #'
 #' This function returns the positions of NA values in the input object, by wrapping
@@ -329,6 +341,7 @@ sub2ind <- function(r=2,c=3,nrow=5,ncol=5){
 #' positions of NA values in x.
 #'
 #' @examples
+#' @noRd
 which.na <- function(x,...){
   which(is.na(x),...)
 }
@@ -401,6 +414,7 @@ getSubNetByNode <- function(Net,
 #' @return
 #'
 #' @examples
+#' @noRd
 theme_cowplot_i <- function (font_size = 14, font_family = "", line_size = 0.5,
                              rel_small = 12/14, rel_tiny = 11/14, rel_large = 16/14)
 {
@@ -472,6 +486,7 @@ theme_cowplot_i <- function (font_size = 14, font_family = "", line_size = 0.5,
 #' @return
 #'
 #' @examples
+#' @noRd
 AddBox <- function(size=1.1,...){
   Boxed <-  theme(axis.line = element_blank(),panel.background = element_rect(fill = "white", colour = NA),
                   panel.border = element_rect(fill = NA, colour = "black",size=size,...))
@@ -512,6 +527,7 @@ getCloseseData <- function(data,query,returnIndex=FALSE){
 #' @return
 #'
 #' @examples
+#' @noRd
 DensityPlotDF_withPoint <- function(x,y,colors=c('green','yellow','red','darkred'),
          ncolor=20,pt.alpha=0.5,fill.alpha=0.5,pt.size=0.5,
          pt.color='grey10',fill.alpha.cut=0.15,showAllpoint=TRUE){
@@ -551,6 +567,7 @@ DensityPlotDF_withPoint <- function(x,y,colors=c('green','yellow','red','darkred
 #' @return
 #'
 #' @examples
+#' @noRd
 NoAxes2 <- function (..., keep.axis.text = FALSE,keep.axis.title = FALSE,  keep.ticks = FALSE) {
   blank <- element_blank()
   no.axes.theme <- theme(axis.line.x = blank, axis.line.y = blank,
@@ -647,6 +664,7 @@ GeneInteraction <- function(scDNSobject,
 #' @return
 #'
 #' @examples
+#' @noRd
 replace2 <- function(x,RawData,RepData){
   x=as.character(x)
   RawData=as.character(RawData)
@@ -665,6 +683,7 @@ replace2 <- function(x,RawData,RepData){
 #' @return
 #'
 #' @examples
+#' @noRd
 theme_pretty <- function(fontsize = 10, font = "Helvetica"){
   nl <- theme_bw(base_size = fontsize) + theme(panel.grid.major = element_blank(),
                                                panel.grid.minor = element_blank(),
@@ -684,6 +703,7 @@ theme_pretty <- function(fontsize = 10, font = "Helvetica"){
 #' @return
 #'
 #' @examples
+#' @noRd
 theme_pretty_NoBox <- function (fontsize = 10, font = "Helvetica") {
   nl <- theme_bw(base_size = fontsize) + theme(panel.grid.major = element_blank(),
                                                panel.grid.minor = element_blank(),

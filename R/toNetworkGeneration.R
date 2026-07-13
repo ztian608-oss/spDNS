@@ -207,6 +207,7 @@ build_network_by_group_generalized <- function(
 #' @return
 #'
 #' @examples
+#' @noRd
 run_network_pipeline <- function(
     seurat_obj,
     group_col,

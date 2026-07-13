@@ -256,6 +256,7 @@ scDNS_1_CalDivs <- function(scDNSobject,
 #' scDNSobject
 #'
 #' @examples
+#' @noRd
 scDNS_2_creatNEAModel <- function(scDNSobject,
                                   n.dropGene = NULL,
                                   n.randNet = NULL,
@@ -310,6 +311,7 @@ scDNS_2_creatNEAModel <- function(scDNSobject,
 #' scDNSobject
 #'
 #' @examples
+#' @noRd
 scDNS_3_GeneZscore <- function(scDNSobject){
   scDNSobject <- getZscore(EdgeScore = scDNSobject,
                             NEAModel = scDNSobject@NEAModel,
@@ -406,6 +408,7 @@ scDNS_4_scContribution <- function(scDNSobject,
 #' seurat object
 #'
 #' @examples
+#' @noRd
 scDNS_5_cluster <- function(scDNSobj,
                           Sobj,biasToscDNS=1,resolution=0.5,merge.red='pca',red.NewName='scDNS'){
   scCC <- Zscore <- scDNSobj@scZscore

@@ -6,6 +6,7 @@
 #' @return scDNSob
 #'
 #' @examples
+#' @noRd
 filterNetowrkFromGAT <- function(scDNSob,GAT_outNet='./data/attention_layer1_epoch1000_wide_confidence.csv'){
   message('raw network will be sorted in scDNSob@Other$Network')
   scDNSob@Other$Network <- scDNSob@Network
@@ -25,6 +26,7 @@ filterNetowrkFromGAT <- function(scDNSob,GAT_outNet='./data/attention_layer1_epo
 #' @return
 #'
 #' @examples
+#' @noRd
 filterNetowrkFromDREMI <- function(scDNSob,rmP=0.01){
   message('raw network will be sorted in scDNSob@Other$Network')
   scDNSob@Other$Network <- scDNSob@Network
@@ -47,6 +49,7 @@ filterNetowrkFromDREMI <- function(scDNSob,rmP=0.01){
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 getZscore<-function(EdgeScore,NEAModel,Likelihood){
 
 

@@ -11,6 +11,7 @@
 #' @return
 #'
 #' @examples
+#' @noRd
 densityCompare <- function(scDNSobject,Nodes,EdgeID=NULL,interpolate=FALSE,filp=FALSE,subEdgeID=1,titleSzie=10){
   Network <- scDNSobject@Network
   if(is.null(EdgeID)){
@@ -112,6 +113,7 @@ densityCompare <- function(scDNSobject,Nodes,EdgeID=NULL,interpolate=FALSE,filp=
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 densityCompare2 <- function(netRes,Nodes,EdgeID=NULL,interpolate=FALSE,filp=FALSE,subEdgeID=1,titleSzie=10){
   Network <- netRes$Network
   if(is.null(EdgeID)){
@@ -181,6 +183,7 @@ densityCompare2 <- function(netRes,Nodes,EdgeID=NULL,interpolate=FALSE,filp=FALS
 #'
 #' @examples
 #'
+#' @noRd
 densityCompare3 <- function (scDNSobject, Nodes, topEdge=10,
                              EdgeID = NULL,
                              ncol=5)
@@ -301,6 +304,7 @@ densityCompare3 <- function (scDNSobject, Nodes, topEdge=10,
 #' @return
 #'
 #' @examples
+#' @noRd
 plot_diffFC_scDNS_Zscore <- function(Zscores,
                                      scDNSob,
                                      sob,
@@ -388,6 +392,7 @@ plot_diffFC_scDNS_Zscore <- function(Zscores,
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 fit_conditional_curve <- function(peaks) {
   library(dplyr)
 
@@ -486,6 +491,7 @@ fit_conditional_curve <- function(peaks) {
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 estimate_sigmoid_start <- function(peaks){
   y_min <- min(peaks$y)
   y_max <- max(peaks$y)
@@ -516,6 +522,7 @@ estimate_sigmoid_start <- function(peaks){
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 estimate_double_sigmoid_start <- function(peaks){
   x <- peaks$x
   y <- peaks$y

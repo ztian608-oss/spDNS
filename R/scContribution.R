@@ -10,6 +10,7 @@
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 scContribution<-function(scDNSobject,
                           nx=20,
                           rmZero = F,
@@ -147,6 +148,7 @@ scContribution<-function(scDNSobject,
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 likelihoodFromMixEM_3dToResult_constrMean <- function(x,muStart=c(mean(x[x<0]),0,mean(x[x>0])),plot=TRUE){
   n.distrubtion=3 # Mixture of three normal distributions.
   if(is.null(muStart)){
@@ -540,6 +542,7 @@ scContribution_v3 <- function (scDNSobject, nx = 20, topGene = 100, sigGene = NU
 #' @return
 #'
 #' @examples
+#' @noRd
 scContribution_v4 <- function (scDNSobject, nx = 20, topGene = 100, sigGene = NULL,rb=F,model=c('cDiv','Div','Plus')[3])
 {
   # Zscores <- IRF4_B_scDNSob@Zscore

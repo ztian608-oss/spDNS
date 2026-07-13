@@ -28,6 +28,7 @@
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 creatNEAModel<-function(counts,
                         ExpData=NULL,
                         do.impute = TRUE,
@@ -537,6 +538,7 @@ adjustNetScore.chiSquare<-function(net,AdModelList_1){
 }
 
 #' @keywords internal
+#' @noRd
 getEdgeDviersity <- function(Net,
                              FeatureMatrix=NULL,
                              FeatureMatrix_C1,
@@ -585,6 +587,7 @@ getEdgeDviersity <- function(Net,
   NodeResult
 }
 #' @keywords internal
+#' @noRd
 getEdgeDviersity_cds <- function(Net,
                                  FeatureMatrix_D1,
                                  FeatureMatrix_D2,
@@ -995,6 +998,7 @@ DensityPlot_raster<-function(z,
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 sea_fit_fix<-function(Dsize,RawScores,Dstd = NULL,
                       winLength = 10,gap = 0.6,
                       coarse = FALSE,sd_1=NULL,mean_1=NULL){
@@ -1135,6 +1139,7 @@ sea_fit_fix<-function(Dsize,RawScores,Dstd = NULL,
 #' @keywords internal
 #'
 #' @examples
+#' @noRd
 sea_fit_fix_st<-function(Dsize,RawScores,Dstd = NULL,
                       winLength = 10,gap = 0.6,
                       coarse = FALSE,sd_1=NULL,mean_1=NULL){
